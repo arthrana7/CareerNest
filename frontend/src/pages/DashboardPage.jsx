@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import client from "../api/client";
+import AccountSwitcherModal from "../components/AccountSwitcherModal";
 
 const EMPTY_FORM = {
   title: "", companyName: "", companyLogo: "", description: "",
@@ -419,39 +420,33 @@ function AdminDashboard({ user }) {
 
 /* ─── Main Export ──────────────────────────────────────── */
 export default function DashboardPage() {
-  const { user, switchRole } = useAuth();
-  const [switching, setSwitching] = useState(false);
-
-  const handleSwitchRole = async () => {
-    const newRole = user.role === 'recruiter' ? 'applicant' : 'recruiter';
-    if (!window.confirm(`Switch your account role to "${newRole}"? This will change what you can do on CareerNest.`)) return;
-    setSwitching(true);
-    try {
-      await switchRole(newRole);
-    } catch {
-      alert('Failed to switch role. Try again.');
-    } finally {
-      setSwitching(false);
-    }
-  };
+  const { user } = useAuth();
+  const [showSwitcher, setShowSwitcher] = useState(false);
 
   return (
     <div>
       {/* Role badge + switcher strip */}
       <div className="role-strip">
         <span className="role-badge">
-          {user.role === 'recruiter' ? '🏢' : '👤'} Logged in as <strong>{user.role}</strong>
+          {user.role === 'recruiter' ? '🏢' : '👤'} Logged in as <strong>{user.name}</strong> ({user.email}) · <span className="pill" style={{ padding: '2px 8px', fontSize: '11px' }}>{user.role}</span>
         </span>
-        {user.role !== 'admin' && (
-          <button className="link-btn role-switch-btn" onClick={handleSwitchRole} disabled={switching}>
-            {switching ? 'Switching…' : `Switch to ${user.role === 'recruiter' ? 'Applicant' : 'Recruiter'}`}
-          </button>
-        )}
+        <button
+          className="link-btn role-switch-btn"
+          onClick={() => setShowSwitcher(true)}
+          title="Switch between recruiter and applicant accounts"
+        >
+          ⇄ Switch Account / Role
+        </button>
       </div>
 
       {user.role === 'recruiter' && <RecruiterDashboard user={user} />}
       {user.role === 'applicant' && <ApplicantDashboard user={user} />}
       {user.role === 'admin' && <AdminDashboard user={user} />}
+
+      <AccountSwitcherModal
+        isOpen={showSwitcher}
+        onClose={() => setShowSwitcher(false)}
+      />
     </div>
   );
 }

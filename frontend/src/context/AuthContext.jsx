@@ -41,8 +41,14 @@ export function AuthProvider({ children }) {
     setUser(data.user);
   };
 
+  const switchAccount = async (target) => {
+    const { data } = await client.post('/auth/switch', target);
+    setUser(data.user);
+    return data.user;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, switchRole, refreshUser: fetchMe }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, switchRole, switchAccount, refreshUser: fetchMe }}>
       {children}
     </AuthContext.Provider>
   );

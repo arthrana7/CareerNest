@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import client from '../api/client';
@@ -6,10 +6,20 @@ import client from '../api/client';
 export default function AuthPage({ mode }) {
   const isLogin = mode === 'login';
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, switchAccount } = useAuth();
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'applicant' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [accounts, setAccounts] = useState({ recruiters: [], applicants: [] });
+  const [quickLoading, setQuickLoading] = useState('');
+
+  useEffect(() => {
+    if (isLogin) {
+      client.get('/auth/accounts')
+        .then(({ data }) => setAccounts(data))
+        .catch(() => {});
+    }
+  }, [isLogin]);
 
   const submit = async (event) => {
     event.preventDefault();
@@ -30,10 +40,71 @@ export default function AuthPage({ mode }) {
     }
   };
 
+  const handleQuickLogin = async (email) => {
+    setError('');
+    setQuickLoading(email);
+    try {
+      await switchAccount({ email });
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Quick login failed.');
+    } finally {
+      setQuickLoading('');
+    }
+  };
+
   return (
     <section className="auth-card">
       <p className="eyebrow">Welcome to CareerNest</p>
       <h1>{isLogin ? 'Good to see you again.' : 'Start your next chapter.'}</h1>
+
+      {isLogin && (accounts.recruiters?.length > 0 || accounts.applicants?.length > 0) && (
+        <div style={{ marginBottom: '24px', padding: '16px', background: '#faf9f5', borderRadius: '12px', border: '1px solid #e6e3d8' }}>
+          <p style={{ margin: '0 0 10px', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#566052' }}>
+            ⚡ 1-Click Demo Login
+          </p>
+
+          {accounts.recruiters?.length > 0 && (
+            <div style={{ marginBottom: '10px' }}>
+              <span style={{ fontSize: '12px', color: '#687266', display: 'block', marginBottom: '4px' }}>🏢 Recruiters:</span>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {accounts.recruiters.map(acc => (
+                  <button
+                    key={acc.id}
+                    type="button"
+                    className="button small secondary"
+                    disabled={!!quickLoading}
+                    onClick={() => handleQuickLogin(acc.email)}
+                    style={{ fontSize: '12px', padding: '4px 10px' }}
+                  >
+                    {quickLoading === acc.email ? '…' : `${acc.name} (${acc.email.split('@')[0]})`}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {accounts.applicants?.length > 0 && (
+            <div>
+              <span style={{ fontSize: '12px', color: '#687266', display: 'block', marginBottom: '4px' }}>👤 Applicants:</span>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {accounts.applicants.map(acc => (
+                  <button
+                    key={acc.id}
+                    type="button"
+                    className="button small secondary"
+                    disabled={!!quickLoading}
+                    onClick={() => handleQuickLogin(acc.email)}
+                    style={{ fontSize: '12px', padding: '4px 10px' }}
+                  >
+                    {quickLoading === acc.email ? '…' : `${acc.name} (${acc.email.split('@')[0]})`}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <form onSubmit={submit}>
         <label>
@@ -86,7 +157,7 @@ export default function AuthPage({ mode }) {
 
         {error && <p className="error">{error}</p>}
 
-        <button className="button" type="submit" disabled={loading}>
+        <button className="button" type="submit" disabled={loading || !!quickLoading}>
           {loading ? 'Please wait…' : isLogin ? 'Sign in' : 'Create account'}
         </button>
       </form>

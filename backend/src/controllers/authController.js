@@ -72,3 +72,35 @@ export async function updateProfile(req, res, next) {
     res.json({ user: safeUser(req.user) });
   } catch (error) { next(error); }
 }
+
+export async function listAccounts(req, res, next) {
+  try {
+    const users = await User.find({}, 'name email role avatar createdAt').sort({ createdAt: -1 });
+    const formatted = users.map(safeUser);
+    res.json({
+      recruiters: formatted.filter(u => u.role === 'recruiter'),
+      applicants: formatted.filter(u => u.role === 'applicant'),
+      admins: formatted.filter(u => u.role === 'admin'),
+      all: formatted,
+    });
+  } catch (error) { next(error); }
+}
+
+export async function switchAccount(req, res, next) {
+  try {
+    const { email, userId } = req.body;
+    let query = {};
+    if (userId) query._id = userId;
+    else if (email) query.email = email.toLowerCase().trim();
+    else return res.status(400).json({ message: 'Email or userId is required' });
+
+    const user = await User.findOne(query);
+    if (!user) return res.status(404).json({ message: 'Account not found' });
+
+    res.cookie('token', createToken(user._id), cookieOptions).json({
+      user: safeUser(user),
+      message: `Switched to ${user.name} (${user.email})`,
+    });
+  } catch (error) { next(error); }
+}
+
