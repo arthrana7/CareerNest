@@ -63,28 +63,6 @@ export default function ProfilePage() {
         {success && <p className="form-success">{success}</p>}
 
         <form onSubmit={handleSubmit} className="profile-form">
-          {/* Avatar preview */}
-          <div className="profile-avatar-row">
-            <div className="profile-avatar" onClick={() => avatarRef.current?.click()}>
-              {avatarSrc
-                ? <img src={avatarSrc} alt="Avatar" className="profile-avatar-img" />
-                : <span className="profile-avatar-initials">{initials}</span>
-              }
-              <div className="profile-avatar-overlay">Change</div>
-            </div>
-            <input
-              type="file"
-              ref={avatarRef}
-              accept="image/*"
-              style={{ display: 'none' }}
-              onChange={handleAvatarChange}
-            />
-            <div style={{ flex: 1 }}>
-              <p style={{ fontWeight: 600, margin: '0 0 4px', color: '#1f3528' }}>{user?.name}</p>
-              <p className="muted" style={{ margin: 0, fontSize: '13px' }}>Click the avatar to change photo</p>
-            </div>
-          </div>
-
           <label>
             Name
             <input
@@ -100,31 +78,46 @@ export default function ProfilePage() {
             Email
             <input
               type="email"
-              value={user?.email}
+              value={user?.email || ''}
               readOnly
-              style={{ background: '#f0ede6', cursor: 'not-allowed', color: '#8a9489' }}
+              style={{ background: '#faf9f6', cursor: 'not-allowed', color: '#687266' }}
               title="Email cannot be changed"
             />
           </label>
 
           <label>
-            Role
-            <input
-              type="text"
-              value={user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1)}
-              readOnly
-              style={{ background: '#f0ede6', cursor: 'not-allowed', color: '#8a9489' }}
-            />
+            Profile image <span className="optional" style={{ fontWeight: 'normal', color: '#687266' }}>optional · max 2 MB</span>
+            <div style={{ marginTop: '6px' }}>
+              <input
+                type="file"
+                ref={avatarRef}
+                accept="image/*"
+                onChange={handleAvatarChange}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  background: '#ffffff',
+                  border: '1px solid #d4d1c7',
+                  borderRadius: '6px',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+            {(avatarPreview || user?.avatar?.url) && (
+              <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <img
+                  src={avatarPreview || user?.avatar?.url}
+                  alt="Avatar preview"
+                  style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #c9c5b9' }}
+                />
+                <span style={{ fontSize: '12px', color: '#566052' }}>
+                  {avatarPreview ? 'New photo selected' : 'Current photo'}
+                </span>
+              </div>
+            )}
           </label>
 
-          {avatarFile && (
-            <label style={{ marginTop: '4px' }}>
-              Profile image <span className="optional">selected</span>
-              <p className="muted" style={{ margin: '4px 0 0', fontSize: '13px' }}>{avatarFile.name}</p>
-            </label>
-          )}
-
-          <button className="button publish-btn" type="submit" disabled={saving}>
+          <button className="button publish-btn" type="submit" disabled={saving} style={{ marginTop: '8px' }}>
             {saving ? 'Saving…' : 'Save profile'}
           </button>
         </form>
