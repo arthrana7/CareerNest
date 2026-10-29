@@ -27,8 +27,13 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
-    await client.post('/auth/logout');
-    setUser(null);
+    try {
+      await client.post('/auth/logout');
+    } catch {
+      // ignore network errors on logout
+    } finally {
+      setUser(null);
+    }
   };
 
   const switchRole = async (role) => {

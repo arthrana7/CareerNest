@@ -1,8 +1,14 @@
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
 
   return (
     <>
@@ -14,7 +20,7 @@ export default function Layout({ children }) {
             <>
               <NavLink to="/dashboard">Dashboard</NavLink>
               <NavLink to="/profile">Profile</NavLink>
-              <button className="link-button" onClick={logout}>Sign out</button>
+              <button className="link-button" onClick={handleLogout}>Sign out</button>
             </>
           ) : (
             <>
