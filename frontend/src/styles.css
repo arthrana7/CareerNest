@@ -84,8 +84,8 @@ input[readonly] { background: #f0ede6; cursor: not-allowed }
 /* ── Company Logo ── */
 .company-logo-initials { width: 48px; height: 48px; border-radius: 8px; background: #e9eee8; display: flex; align-items: center; justify-content: center; font: 600 14px 'DM Mono'; color: #3b5e48; flex-shrink: 0; border: 1px solid #d4d1c7 }
 .company-logo-initials.small { width: 44px; height: 44px; font-size: 13px }
-.company-logo-img { width: 48px; height: 48px; object-fit: contain; border-radius: 8px; border: 1px solid #dedbd1; flex-shrink: 0 }
-.company-logo-img.small { width: 44px; height: 44px }
+.company-logo-img { width: 48px; height: 48px; object-fit: contain; border-radius: 8px; border: 1px solid #dedbd1; flex-shrink: 0; background: #ffffff; padding: 4px; box-sizing: border-box }
+.company-logo-img.small { width: 44px; height: 44px; padding: 3px }
 
 /* ── Pills ── */
 .pill { display: inline-block; margin: 0; background: #e6eee8; color: #28543c; padding: 4px 8px; border-radius: 20px; font: 12px 'DM Mono' }

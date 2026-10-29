@@ -2,12 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import client from '../api/client';
 import { useAuth } from '../context/AuthContext';
-
-function Logo({ name, url }) {
-  if (url) return <img src={url} alt={name} className="company-logo-img" />;
-  const initials = name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?';
-  return <div className="company-logo-initials">{initials}</div>;
-}
+import CompanyLogo from '../components/CompanyLogo';
 
 function timeAgo(date) {
   const s = Math.floor((Date.now() - new Date(date)) / 1000);
@@ -116,7 +111,7 @@ export default function JobDetailPage() {
         <Link to="/jobs" className="back-link">← All jobs</Link>
 
         <div className="job-detail-header">
-          <Logo name={job.companyName} url={job.companyLogo} />
+          <CompanyLogo name={job.companyName} url={job.companyLogo} className="" />
           <div className="job-detail-header-text">
             <span className="pill">{job.employmentType?.toUpperCase()}</span>
             <h1 className="job-detail-title">{job.title}</h1>

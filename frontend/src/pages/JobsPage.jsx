@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import client from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import CompanyLogo from '../components/CompanyLogo';
 
 function timeAgo(date) {
   const s = Math.floor((Date.now() - new Date(date)) / 1000);
@@ -10,12 +11,6 @@ function timeAgo(date) {
   if (s < 86400) return `${Math.floor(s / 3600)} hr ago`;
   const d = Math.floor(s / 86400);
   return d === 1 ? 'yesterday' : `${d} days ago`;
-}
-
-function Logo({ name, url }) {
-  if (url) return <img src={url} alt={name} className="company-logo-img small" />;
-  const initials = name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?';
-  return <div className="company-logo-initials small">{initials}</div>;
 }
 
 export default function JobsPage() {
@@ -128,7 +123,7 @@ export default function JobsPage() {
                 tabIndex={0}
                 onKeyDown={e => e.key === 'Enter' && handleCardClick(job)}
               >
-                <Logo name={job.companyName} url={job.companyLogo} />
+                <CompanyLogo name={job.companyName} url={job.companyLogo} className="small" />
                 <div className="job-list-card-body">
                   <div className="job-list-card-top">
                     <h2 className="job-list-card-title">
