@@ -53,12 +53,12 @@ export default function JobsPage() {
     load(filters);
   };
 
-  const handleCardClick = (job) => {
+  const handleCardClick = (job, openApply = false) => {
     // Mark as viewed
     const newViewed = new Set([...viewedIds, job._id]);
     setViewedIds(newViewed);
     localStorage.setItem('viewed_jobs', JSON.stringify([...newViewed]));
-    navigate(`/jobs/${job._id}`);
+    navigate(openApply ? `/jobs/${job._id}?apply=true` : `/jobs/${job._id}`);
   };
 
   const formatSalary = (salary) => {
@@ -141,7 +141,19 @@ export default function JobsPage() {
                     </div>
                   )}
                 </div>
-                <div className="job-list-card-arrow">→</div>
+                <div className="job-list-card-actions-col">
+                  <button
+                    type="button"
+                    className="button small card-apply-cta"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCardClick(job, true);
+                    }}
+                  >
+                    Apply now
+                  </button>
+                  <span className="job-list-card-arrow">→</span>
+                </div>
               </article>
             );
           })}

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import client from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import CompanyLogo from '../components/CompanyLogo';
@@ -13,9 +13,10 @@ function timeAgo(date) {
   return d === 1 ? 'yesterday' : `${d} days ago`;
 }
 
-export default function JobDetailPage() {
+export default function JobDetailPage({ defaultApplyOpen = false }) {
   const { id } = useParams();
-  const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { user, switchAccount } = useAuth();
   const navigate = useNavigate();
   const resumeRef = useRef(null);
 
@@ -23,14 +24,20 @@ export default function JobDetailPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
-  // Apply state
+  // Apply state - opens automatically if query param ?apply=true or prop defaultApplyOpen
   const [hasApplied, setHasApplied] = useState(false);
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(defaultApplyOpen || searchParams.get('apply') === 'true');
   const [coverLetter, setCoverLetter] = useState('');
   const [resume, setResume] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [applyError, setApplyError] = useState('');
   const [applySuccess, setApplySuccess] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get('apply') === 'true') {
+      setShowForm(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const fetchJob = async () => {
@@ -55,14 +62,34 @@ export default function JobDetailPage() {
   }, [id, user]);
 
   const handleApplyClick = () => {
-    if (!user) { navigate('/login'); return; }
-    if (user.role !== 'applicant') return;
     setShowForm(true);
     setApplyError('');
   };
 
+  const handleSwitchToApplicant = async () => {
+    try {
+      const { data } = await client.get('/auth/accounts');
+      if (data.applicants?.length > 0) {
+        await switchAccount({ email: data.applicants[0].email });
+        setApplyError('');
+      } else {
+        navigate('/register');
+      }
+    } catch {
+      navigate('/login');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!user) {
+      setApplyError('Please sign in or select an account below to submit.');
+      return;
+    }
+    if (user.role !== 'applicant') {
+      setApplyError('You are currently on a recruiter account. Please switch to an applicant account to submit.');
+      return;
+    }
     setApplyError('');
     setSubmitting(true);
     try {
@@ -158,12 +185,25 @@ export default function JobDetailPage() {
             Apply directly and keep track of your application from your workspace.
           </p>
 
-          {hasApplied ? (
+          {hasApplied && !showForm ? (
             <div className="apply-card-applied">
               <span>✓ Application submitted</span>
-              <Link to="/dashboard" className="button secondary" style={{ marginTop: '12px', display: 'block', textAlign: 'center' }}>
-                View in dashboard
-              </Link>
+              <p className="muted" style={{ margin: '8px 0 12px', fontSize: '13px' }}>
+                You have already submitted an application for this role.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <Link to="/dashboard" className="button secondary" style={{ textAlign: 'center' }}>
+                  View in dashboard
+                </Link>
+                <button
+                  type="button"
+                  className="link-btn"
+                  onClick={() => setShowForm(true)}
+                  style={{ textAlign: 'center', fontSize: '13px', textDecoration: 'underline' }}
+                >
+                  Submit another application / re-upload résumé →
+                </button>
+              </div>
             </div>
           ) : applySuccess ? (
             <div className="form-success" style={{ marginTop: '16px' }}>
@@ -181,6 +221,26 @@ export default function JobDetailPage() {
               <hr className="divider" style={{ margin: '20px 0' }} />
               <form onSubmit={handleSubmit} className="apply-form">
                 {applyError && <p className="form-error">{applyError}</p>}
+
+                {user?.role === 'recruiter' && (
+                  <div style={{ background: '#fff9e6', border: '1px solid #ebd69b', padding: '10px 12px', borderRadius: '6px', fontSize: '12px', color: '#7a5a12', marginBottom: '14px' }}>
+                    <strong>Note:</strong> You're logged in as Recruiter (<code>{user.email}</code>). Applications must be submitted by an applicant.
+                    <button
+                      type="button"
+                      className="button small"
+                      onClick={handleSwitchToApplicant}
+                      style={{ marginTop: '8px', width: '100%', fontSize: '12px' }}
+                    >
+                      ⇄ 1-Click Switch to Applicant & Apply
+                    </button>
+                  </div>
+                )}
+
+                {!user && (
+                  <div style={{ background: '#edf2ee', border: '1px solid #c8d9cc', padding: '10px 12px', borderRadius: '6px', fontSize: '12px', color: '#234b39', marginBottom: '14px' }}>
+                    Please <Link to="/login" style={{ fontWeight: 600, color: '#234b39' }}>sign in</Link> or <Link to="/register" style={{ fontWeight: 600, color: '#234b39' }}>register</Link> to submit your application.
+                  </div>
+                )}
 
                 <label>
                   Cover letter <span className="optional">optional</span>
@@ -220,13 +280,13 @@ export default function JobDetailPage() {
             </>
           )}
 
-          {!user && (
+          {!user && !showForm && (
             <p className="muted" style={{ marginTop: '14px', fontSize: '13px', textAlign: 'center' }}>
               <Link to="/login" style={{ color: '#234b39' }}>Sign in</Link> to apply
             </p>
           )}
-          {user?.role === 'recruiter' && (
-            <p className="muted" style={{ marginTop: '14px', fontSize: '13px' }}>
+          {user?.role === 'recruiter' && !showForm && (
+            <p className="muted" style={{ marginTop: '14px', fontSize: '13px', textAlign: 'center' }}>
               You're viewing as a recruiter.
             </p>
           )}
